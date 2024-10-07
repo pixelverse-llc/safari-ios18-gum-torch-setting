@@ -1,4 +1,4 @@
-# Reproducer for Safari/iOS 18 bug where getUserMedia video track getSettings() returns stale value for torch constraint
+# Reproducer for WebKit issue 280970
 
 This repository illustrates a bug in Safari on iOS 18 where getting video track settings appears to return stale
 values for the `torch` constraint (flashlight on smartphones).

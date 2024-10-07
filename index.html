@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>iOS 18 getUserMedia torch setting always returns false</title>
+    <style>
+        * {
+            margin: 0;
+        }
+        main {
+            padding: 15px;
+        }
+        video {
+            width: 100%;
+            height: 168px;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+
+<main>
+    <h1>iOS 18 getUserMedia torch setting</h1>
+    <p>Calling getSettings() on a video track that supports the 'torch' constraint (= flashlight on smartphones)
+        does not return the current setting, instead always return false.</p>
+    <video preload="metadata" playsinline>
+        <!-- where the video will play -->
+    </video>
+    <div>
+        <span>Torch constraint: </span>
+        <button id="on_button">ON</button>
+        <button id="off_button">OFF</button>
+    </div>
+    <div>
+        <span>Video track settings: </span><button id="get_settings_button">GET SETTINGS</button>
+    </div>
+    <div>
+        Video track ID: <span id="video_track_id"></span>
+    </div>
+    <small id="settings">
+
+    </small>
+</main>
+
+<script type="module">
+    const videoElement = document.getElementsByTagName('video')[0];
+    let theVideoTrack = undefined;
+    const onButton = document.getElementById('on_button');
+    const offButton = document.getElementById('off_button');
+    const getSettingsButton = document.getElementById('get_settings_button');
+
+    async function startCameraFeed() {
+
+        // obtain video feed from back-facing camera
+        const constraints = {
+            audio: false,
+            video: {
+                facingMode: {
+                    ideal: 'environment'
+                }
+            }
+        };
+        return navigator.mediaDevices.getUserMedia(constraints).then((mediaStream) => {
+            videoElement.onloadedmetadata = () => videoElement.play();
+            videoElement.srcObject = mediaStream; // triggers loading the video
+            theVideoTrack = mediaStream.getVideoTracks()[0]
+            document.getElementById('video_track_id').innerText = theVideoTrack.id;
+            getSettingsButton.disabled = false;
+            onButton.disabled = false;
+            offButton.disabled = false;
+            getAndShowSettings();
+        }).catch((err) => {
+            window.alert('getUserMedia failed: ' + err);
+        });
+    }
+
+    function getAndShowSettings() {
+        if (theVideoTrack) {
+            document.getElementById('settings').innerText = JSON.stringify(theVideoTrack.getSettings(), null, 2);
+        }
+    }
+
+    onButton.onclick = () => {
+        theVideoTrack.applyConstraints({
+            advanced: [
+                { torch: true }
+            ]
+        })
+            .then(() => getAndShowSettings())
+            .catch(err => {
+                console.error('Failed to enable torch', err);
+            });
+    };
+    offButton.onclick = () => {
+        theVideoTrack.applyConstraints({
+            advanced: [
+                { torch: false }
+            ]
+        })
+            .then(() => getAndShowSettings())
+            .catch(err => {
+                console.error('Failed to disable torch', err);
+            });
+    }
+    getSettingsButton.onclick = () => {
+        document.getElementById('settings').innerText = JSON.stringify(theVideoTrack.getSettings(), null, 2);
+    };
+    startCameraFeed();
+</script>
+
+</body>
+</html>
